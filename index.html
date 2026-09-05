@@ -1,16 +1,92 @@
-<!doctype html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Status (dev) — Nauralta</title>
-  <style>
-    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
-           background: #14121f; color: #f1eef9; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-    p { opacity: .6; }
-  </style>
-</head>
-<body>
-  <p>De statuspagina wordt hier binnenkort automatisch gepubliceerd. (development)</p>
-</body>
-</html>
+<!doctype html><html lang="nl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Status — Nauralta</title><style>:root { color-scheme: dark; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #14121f; color: #f1eef9; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+.wrap { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+.topbar { padding: 24px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.brand { font-weight: 700; font-size: 1.1rem; }
+.brand-sub { opacity: .6; margin-left: 8px; }
+main.wrap { padding-top: 32px; padding-bottom: 64px; display: flex; flex-direction: column; gap: 20px; }
+.hero { border-radius: 12px; padding: 28px 24px; text-align: center; }
+.hero h1 { margin: 0; font-size: 1.4rem; }
+.hero-good { background: rgba(52,199,89,.15); color: #34c759; }
+.hero-warn { background: rgba(255,184,0,.15); color: #ffb800; }
+.hero-bad { background: rgba(255,69,58,.15); color: #ff453a; }
+.hero-info { background: rgba(10,132,255,.15); color: #0a84ff; }
+.card { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 20px 24px; }
+.group-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.group-title { margin: 0; font-size: 1rem; font-weight: 600; }
+.rows { display: flex; flex-direction: column; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.row:first-child { border-top: none; }
+.row-main { display: flex; flex-direction: column; gap: 2px; }
+.row-name { font-weight: 500; }
+.row-desc { font-size: .85rem; opacity: .65; }
+.badge { flex-shrink: 0; font-size: .75rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.badge-good { background: rgba(52,199,89,.15); color: #34c759; }
+.badge-warn { background: rgba(255,184,0,.15); color: #ffb800; }
+.badge-partial { background: rgba(255,138,0,.15); color: #ff8a00; }
+.badge-bad { background: rgba(255,69,58,.15); color: #ff453a; }
+.badge-info { background: rgba(10,132,255,.15); color: #0a84ff; }
+.muted { opacity: .6; margin: 0; }
+.subscribe { display: flex; gap: 8px; flex-wrap: wrap; }
+.subscribe input { flex: 1; min-width: 200px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.04); color: inherit; }
+.subscribe button { padding: 10px 18px; border-radius: 8px; border: none; background: #6c4de6; color: #fff; font-weight: 600; cursor: pointer; }
+.update { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.06); }
+.update:first-child { border-top: none; padding-top: 0; }
+.update-head { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.update-title { font-weight: 600; }
+.update-meta { font-size: .8rem; opacity: .6; margin-bottom: 8px; }
+.update-body { font-size: .9rem; line-height: 1.5; }
+.foot { text-align: center; opacity: .4; font-size: .8rem; padding-bottom: 32px; }
+.action-result { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); padding: 10px 18px; border-radius: 8px; font-size: .9rem; }
+.action-result.ok { background: rgba(52,199,89,.9); color: #06280f; }
+.action-result.err { background: rgba(255,69,58,.9); color: #2b0906; }</style></head><body><header class="topbar"><div class="wrap"><span class="brand">Nauralta</span><span class="brand-sub">Status</span></div></header><main class="wrap"><section class="hero hero-good"><h1>Alle systemen operationeel</h1></section><section class="card"><p class="muted">Er zijn nog geen diensten gepubliceerd.</p></section><section class="card"><h2 class="group-title">Blijf op de hoogte</h2><form id="subscribe-form" class="subscribe"><input type="email" id="subscribe-email" required placeholder="jouw@email.nl"><button type="submit">Aanmelden</button></form><p id="subscribe-result" class="muted" hidden></p></section><section class="card"><h2 class="group-title">Recente updates</h2><p class="muted">Nog geen updates.</p></section></main><footer class="wrap foot">Nauralta</footer><div id="action-result" class="action-result" hidden></div><script>(function () {
+  var api = "https://dev.api.portal.nauralta.com";
+  var result = document.getElementById('action-result');
+
+  function showResult(ok, message) {
+    result.textContent = message;
+    result.className = 'action-result ' + (ok ? 'ok' : 'err');
+    result.hidden = false;
+  }
+
+  var params = new URLSearchParams(location.search);
+  var confirmToken = params.get('confirm');
+  var unsubscribeToken = params.get('unsubscribe');
+
+  if (confirmToken) {
+    fetch(api + '/api/status/public/subscribe/confirm?token=' + encodeURIComponent(confirmToken))
+      .then(function (r) { showResult(r.ok, r.ok ? 'Je aanmelding is bevestigd.' : 'Deze bevestigingslink is ongeldig of verlopen.'); })
+      .catch(function () { showResult(false, 'Er ging iets mis bij het bevestigen.'); });
+  } else if (unsubscribeToken) {
+    fetch(api + '/api/status/public/unsubscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: unsubscribeToken })
+    })
+      .then(function (r) { showResult(r.ok, r.ok ? 'Je bent afgemeld.' : 'Deze afmeldlink is ongeldig.'); })
+      .catch(function () { showResult(false, 'Er ging iets mis bij het afmelden.'); });
+  }
+
+  var form = document.getElementById('subscribe-form');
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var email = document.getElementById('subscribe-email').value;
+    var out = document.getElementById('subscribe-result');
+
+    fetch(api + '/api/status/public/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email })
+    })
+      .then(function () {
+        out.textContent = 'Bedankt! Check je inbox om je aanmelding te bevestigen.';
+        out.hidden = false;
+        form.reset();
+      })
+      .catch(function () {
+        out.textContent = 'Er ging iets mis. Probeer het later opnieuw.';
+        out.hidden = false;
+      });
+  });
+})();</script></body></html>
